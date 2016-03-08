@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 from heapq import heapify, heappushpop, heapreplace, heappop, heappush
+from collections import defaultdict
 
 __version__ = '0.15'
 __version_info__ = (0, 15)
@@ -110,9 +111,9 @@ class RemovalHeap(Heap):
 
     def __init__(self, iterable=[]):
         _list = list(iterable)
-        self._item_set = set(_list)
-        if len(_list) != len(self._item_set):
-            raise RuntimeError('duplicate items not allowed: {_list}'.format(_list=_list))
+        self._item_set = defaultdict(int)
+        for x in _list:
+            self._item_set[x] += 1
         super(RemovalHeap, self).__init__(_list)
 
     def peek(self):
@@ -123,42 +124,44 @@ class RemovalHeap(Heap):
         return return_item
 
     def push(self, item):
-        if item in self._item_set:
-            raise RuntimeError('duplicate item not allowed: {item}'.format(item=item))
         heappush(self, item)
-        self._item_set.add(item)
+        self._item_set[item] += 1
 
     def pop(self):
         return_item = heappop(self)
         while return_item not in self._item_set:
             return_item = heappop(self)
-        self._item_set.remove(return_item)
+        self._item_set[return_item] -= 1
+        if self._item_set[return_item] == 0:
+            del self._item_set[return_item]
         self.sweep()
         return return_item
 
     def remove(self, item):
-        self._item_set.remove(item)
+        self._item_set[item] -= 1
+        if self._item_set[item] == 0:
+            del self._item_set[item]
         self.sweep()
 
     def poppush(self, item):
-        if item in self._item_set:
-            raise RuntimeError('duplicate item not allowed: {item}'.format(item=item))
-        self._item_set.add(item)
+        self._item_set[item] += 1
         while self[0] not in self._item_set:
             heappop(self)
         return_item = heapreplace(self, item)
-        self._item_set.remove(return_item)
+        self._item_set[return_item] -= 1
+        if self._item_set[return_item] == 0:
+            del self._item_set[return_item]
         return return_item
     replace = poppush
 
     def pushpop(self, item):
-        if item in self._item_set:
-            raise RuntimeError('duplicate item not allowed: {item}'.format(item=item))
-        self._item_set.add(item)
+        self._item_set[item] += 1
         return_item = heappushpop(self, item)
         while return_item not in self._item_set:
             return_item = heappop(self)
-        self._item_set.remove(return_item)
+        self._item_set[return_item] -= 1
+        if self._item_set[return_item] == 0:
+            del self._item_set[return_item]
         return return_item
 
     def sweep(self):
@@ -188,9 +191,9 @@ class XHeap(Heap):
             raise RuntimeError('specify key when using XHeap; otherwise, just use RemovalHeap')
         self.key = key
         _list = list(iterable)
-        self._item_set = set(_list)
-        if len(_list) != len(self._item_set):
-            raise RuntimeError('duplicate items not allowed: {_list}'.format(_list=_list))
+        self._item_set = defaultdict(int)
+        for x in _list:
+            self._item_set[x] += 1
         super(XHeap, self).__init__((key(item), item) for item in _list)
 
     # order
@@ -203,21 +206,23 @@ class XHeap(Heap):
 
     # order + removal
     def push(self, item):
-        if item in self._item_set:
-            raise RuntimeError('duplicate item not allowed: {item}'.format(item=item))
         heappush(self, (self.key(item), item))
-        self._item_set.add(item)
+        self._item_set[item] += 1
 
     def pop(self):
         return_item = heappop(self)[1]
         while return_item not in self._item_set:
             return_item = heappop(self)[1]
-        self._item_set.remove(return_item)
+        self._item_set[return_item] -= 1
+        if self._item_set[return_item] == 0:
+            del self._item_set[return_item]
         self.sweep()
         return return_item
 
     def remove(self, item):
-        self._item_set.remove(item)
+        self._item_set[item] -= 1
+        if self._item_set[item] == 0:
+            del self._item_set[item]
         self.sweep()
 
     def sweep(self):
@@ -227,25 +232,25 @@ class XHeap(Heap):
 
     # order + removal
     def poppush(self, item):
-        if item in self._item_set:
-            raise RuntimeError('duplicate item not allowed: {item}'.format(item=item))
-        self._item_set.add(item)
+        self._item_set[item] += 1
         while self[0][1] not in self._item_set:
             heappop(self)
         return_item = heapreplace(self, (self.key(item), item))[1]
-        self._item_set.remove(return_item)
+        self._item_set[return_item] -= 1
+        if self._item_set[return_item] == 0:
+            del self._item_set[return_item]
         return return_item
     replace = poppush
 
     # order + removal
     def pushpop(self, item):
-        if item in self._item_set:
-            raise RuntimeError('duplicate item not allowed: {item}'.format(item=item))
-        self._item_set.add(item)
+        self._item_set[item] += 1
         return_item = heappushpop(self, (self.key(item), item))[1]
         while return_item not in self._item_set:
             return_item = heappop(self)[1]
-        self._item_set.remove(return_item)
+        self._item_set[return_item] -= 1
+        if self._item_set[return_item] == 0:
+            del self._item_set[return_item]
         return return_item
 
     # removal
